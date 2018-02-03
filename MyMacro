@@ -13,11 +13,12 @@ Sub Main
 	sheet.unprotect("193782")
 	
 	saveCustomer(sheet)
-	maxRowNum = getMaxRowNum(sheet)
-	maxRowNum = removeEmptyCells(sheet, maxRowNum)
-	addDateIfNeeded(sheet, maxRowNum)
-	arrangeTotalCell(sheet)
-	
+	if document.isModified then 
+		maxRowNum = getMaxRowNum(sheet)
+		maxRowNum = removeEmptyCells(sheet, maxRowNum)
+		addDateIfNeeded(sheet, maxRowNum)
+		arrangeTotalCell(sheet)
+	end if
 	sheet.protect("193782")
 
 End Sub
@@ -68,12 +69,40 @@ function arrangeTotalCell(sheet as object)
 	totalCell.setFormula("=SUM(B2:B9999)")
 end function
 
-function saveCustomer(sheet as object) 
-	dim customerName as string
-	dim customerCell as object	
-	customerCell = sheet.getCellByPosition(0,0)
-	customerName = InputBox("Müşteri adını girin: ")
-	customerName = LCase(customerName)
-	customerCell.setString(UCase(customer))
+function saveCustomer(sheet as object)
+	dim cell as object
+	cell = sheet.getCellByPosition(0, 0)
+	if cell.getString() = "MÜŞTERİ ADI" then
+		dim customerName as string
+		dim filePath as string
+		dim saveToUrl as string 
+		customerName = InputBox("Müşteri adını giriniz:")
+		cell.setString(UCase(customerName))
+		filePath = "/home/akin/Masaüstü/"
+		saveToUrl = ConvertToURL(filePath & customerName)
+		ThisComponent.store()
+		rem-- ThisComponent.StoreToUrl(saveToUrl, Array(MakePropertyValue("FilterName", "Calc8")))
+	end if
+	
 end function
+
+Function MakePropertyValue(Optional sName As String, Optional sValue) As com.sun.star.beans.PropertyValue
+'-------------------------------------------------------------------
+' Create and return a new com.sun.star.beans.PropertyValue
+'-------------------------------------------------------------------
+
+    Dim oPropertyValue As New com.sun.star.beans.PropertyValue
+    
+    
+    If Not IsMissing(sName) Then
+       oPropertyValue.Name = sName
+    EndIf
+    
+    If Not IsMissing(sValue) Then
+       oPropertyValue.Value = sValue
+    EndIf
+    
+    MakePropertyValue() = oPropertyValue
+
+End Function
 
