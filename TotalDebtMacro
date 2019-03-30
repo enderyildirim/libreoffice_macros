@@ -1,0 +1,93 @@
+Dim NextFile As String
+Dim FileName As String
+Dim FileURL As String
+Dim SearchPath As String
+Dim Document As Object
+Dim ThisSheet As Object
+Dim FileProperties(1) As New com.sun.star.beans.PropertyValue
+Dim StartRow As Integer
+Dim NameColIndex As Integer
+Dim TotalDebtColIndex As Integer
+Dim TotalDebtColIndexForCustomerSheet As Integer
+Dim TotalDebtRowIndexForCustomerSheet As Integer
+Dim CustomerNameColIndexForCustomerSheet As Integer
+Dim CustomerNameRowIndexForCustomerSheet As Integer
+Dim CustomerSheetPassword As String
+Dim CustomerSheet As Object
+Dim TotalCell As Object
+Dim TotalValueCell As Object
+
+Sub Main
+  ' Dosyayı hidden modda açıp içeriğini almak için gerekli
+  FileProperties(0).Name = "Hidden"
+  FileProperties(0).Value = True
+  FileProperties(1).Name = "MacroExecutionMode"
+  FileProperties(1).Value = com.sun.star.document.MacroExecMode.ALWAYS_EXECUTE_NO_WARN
+ 
+  ThisSheet             = ThisComponent.Sheets.getByIndex(0)
+  SearchPath            = "D:\Temp\Veresiye\"
+  CustomerSheetPassword = "193782"
+  StartRow              = 1
+  NameColIndex          = 0
+  TotalDebtColIndex     = 1
+  TotalDebtColIndexForCustomerSheet = 3
+  TotalDebtRowIndexForCustomerSheet = 2
+  CustomerNameColIndexForCustomerSheet = 0
+  CustomerNameRowIndexForCustomerSheet = 0
+  
+  MsgBox "Müşteri borçları toplanıyor. Lütfen bekleyin."
+  Dim Index As Integer
+  NextFile = Dir(SearchPath, 0)
+  Index = 0
+  While NextFile  <> ""
+    If Not(contains(NextFile, "lock")) Then
+      FileName = SearchPath & NextFile
+	  FileURL = ConvertToURL(FileName)
+	  Document = StarDesktop.loadComponentFromURL(FileURL, "_blank", 0, FileProperties())
+	  CustomerSheet = Document.Sheets.getByIndex(0)	
+	  createCustomerRecordFromSheet(CustomerSheet, Index)
+	  Document.close(True)   
+      Index = Index + 1
+    End If
+    NextFile = Dir
+  Wend
+  TotalCell = ThisSheet.getCellByPosition(NameColIndex, Index + StartRow)
+  TotalValueCell = ThisSheet.getCellByPosition(TotalDebtColIndex, Index + StartRow)
+  TotalCell.setString("TOPLAM")
+  TotalCell.cellBackColor = RGB(50, 255, 0)
+  TotalCell.charWeight = com.sun.star.awt.FontWeight.NORMAL
+  TotalCell.charColor = RGB(201, 33, 30)
+  TotalValueCell.setFormula("=SUM(B" & StartRow & ":B" & Index & ")")
+  TotalValueCell.charWeight = com.sun.star.awt.FontWeight.NORMAL
+ 
+  MsgBox "Hesaplama işlemi tamamlandı."
+End Sub
+
+Function createCustomerRecordFromSheet(Sheet As Object, Index As Integer)
+  Dim CustomerName As String
+  Dim CustomerTotalDebt As Integer
+  CustomerName = Sheet.getCellByPosition(CustomerNameColIndexForCustomerSheet, CustomerNameRowIndexForCustomerSheet).getString()
+  CustomerTotalDebt = Sheet.getCellByPosition(TotalDebtColIndexForCustomerSheet, TotalDebtRowIndexForCustomerSheet).getValue()
+  ThisSheet.getCellByPosition(NameColIndex, Index + StartRow).setString(CustomerName)
+  ThisSheet.getCellByPosition(TotalDebtColIndex, Index + StartRow).setValue(CustomerTotalDebt)
+End Function
+
+Function contains(str As String, containsStr As String)
+  contains = InStr(str, containsStr) > 0
+End Function
+
+
+Sub ShowFiles
+  Dim NextFile As String
+  Dim AllFiles As String
+ 
+  AllFiles = ""
+  NextFile = Dir("D:\Temp\Veresiye\", 0)
+ 
+  While NextFile  <> ""
+    AllFiles = AllFiles & Chr(13) &  NextFile 
+    NextFile = Dir
+  Wend
+ 
+  MsgBox AllFiles
+End Sub
